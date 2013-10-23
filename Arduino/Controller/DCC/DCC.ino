@@ -1,33 +1,44 @@
 /*
 Title:  DCC Controller
-Author: Scott Schiavone
-Data:   10/21/2013
-
-Software Description:  
-
-This code takes three bytes of data (address, data, error) and sends them out
-one bit at a time as a DCC signal. The packet format should conform to NMRA 
-standard S 9.2 July 2004.
-
-Hardware Description:
-
-Atmega328P running at 16MHz
-
-The DCC signal is sent to model rail road train track rails through four mosfets
-configured in an H-Bridge pattern. The output pins to the H-Bridge from the Atmega328P 
-are PB5 and PB6. 
-
-
-*/
+ Author: Scott Schiavone
+ Data:   10/21/2013
+ 
+ Software Description:  
+ 
+ This code takes three bytes of data (address, data, error) and sends them out
+ one bit at a time as a DCC signal. The packet format should conform to NMRA 
+ standard S 9.2 July 2004.
+ 
+ Hardware Description:
+ 
+ Atmega328P running at 16MHz
+ 
+ The DCC signal is sent to model rail road train track rails through four mosfets
+ configured in an H-Bridge pattern. The output pins to the H-Bridge from the Atmega328P 
+ are PB5 and PB6. 
+ 
+ 
+ */
 
 #include "TimerOne.h"
 
 #define ONE_BIT 56                              // 56 µs
 #define ZERO_BIT 112                            // 112 µs
 
-byte address = 0x03;
-byte data = 0x62;
-byte error = 0x61;
+
+byte address = 0x00;
+byte data = 0x00;
+byte error = 0x00;
+
+byte address1 = 0x03;
+byte data1 = 0x78;
+byte error1 = 0x7b;
+
+byte address2 = 0x05;
+byte data2 = 0x78;
+byte error2 = 0x7d;
+
+byte doneflag = 0;
 
 byte bitCount = 0;                              // used for keeping track of what stage in packet program is
 
@@ -45,6 +56,7 @@ void callback()                                 // callback for timer ISR
 
   if(0x20 == (PORTD & 0x20))                    // if ready for new bit
   {    
+    
     if(bitCount < 14)
       Timer1.initialize(ONE_BIT);               // send preamble
 
@@ -65,9 +77,25 @@ void callback()                                 // callback for timer ISR
 
     else if(bitCount == 41)
       Timer1.initialize(ONE_BIT);               // send Packet End Bit
-      
+
     if(bitCount > 41)
+    {
       bitCount = 0;
+      if(!doneflag)
+      {
+        doneflag = 1;
+        address = address2;
+        data = data2;
+        error = error2;
+      }
+      else
+      {
+        address = address1;
+        doneflag = 0; 
+        data = data1;
+        error = error1;
+      }
+    }
     else if(errorCheck(address,data,error))
       bitCount++;
     else
@@ -101,3 +129,4 @@ boolean errorCheck(byte address, byte data, byte error)
   else
     return false;
 }
+
