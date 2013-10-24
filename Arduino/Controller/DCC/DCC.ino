@@ -1,5 +1,5 @@
 /*
-Title:  DCC Controller
+  Title:  DCC Controller
  Author: Scott Schiavone
  Data:   10/21/2013
  
@@ -24,21 +24,21 @@ Title:  DCC Controller
 
 #define ONE_BIT 56                              // 56 µs
 #define ZERO_BIT 112                            // 112 µs
+#define MAX_TRAINS 10                           // Maximum number of trains we can address
 
+typedef struct msg{                             // Structure of message to be sent
+  byte address;                                 // Address of DCC decoder
+  byte data;                                    // Data to be sent to DCC decoder
+  byte error;                                   // Error Checksum
+};
 
-byte address = 0x00;
-byte data = 0x00;
-byte error = 0x00;
+msg currentTrain;                               // Single copy of train to hold current message being sent.
 
-byte address1 = 0x03;
-byte data1 = 0x78;
-byte error1 = 0x7b;
+msg trainQueue[MAX_TRAINS];                     // Array of trains
 
-byte address2 = 0x05;
-byte data2 = 0x78;
-byte error2 = 0x7d;
-
-byte doneflag = 0;
+byte countSent = 0;                             // Counter for sent messages
+byte countTrains = 0;                           // Counter for active trains, 
+                                                // assuming sequentially located in the array
 
 byte bitCount = 0;                              // used for keeping track of what stage in packet program is
 
@@ -48,6 +48,18 @@ void setup()
   PORTD |= 0x20;                                // set PB5 HIGH
   Timer1.initialize(ONE_BIT);                   // initialize timer1, and set to 56 µs 
   Timer1.attachInterrupt(callback);             // attaches callback() as a timer overflow interrupt
+  
+  trainQueue[0].address = 0x03;                 // statically assigning train 0 in array to physical train 3
+  trainQueue[0].data = 0x78;                    // statically assigning train 0 to go forward at step 14
+  trainQueue[0].error = 0x7b;                   // checksum of address ^ data
+  countTrains++;                                // increase train count
+
+  trainQueue[0].address = 0x05;                 // statically assigning train 0 in array to physical train 3
+  trainQueue[0].data = 0x78;                    // statically assigning train 0 to go forward at step 14
+  trainQueue[0].error = 0x7d;                   // checksum of address ^ data
+  countTrains++;                                // increase train count
+
+  currentTrain = trainQueue[0];                 // sets the current train to the first in the queue.
 }
 
 void callback()                                 // callback for timer ISR
@@ -56,47 +68,36 @@ void callback()                                 // callback for timer ISR
 
   if(0x20 == (PORTD & 0x20))                    // if ready for new bit
   {    
-    
+
     if(bitCount < 14)
       Timer1.initialize(ONE_BIT);               // send preamble
 
     else if(bitCount == 14)
       Timer1.initialize(ZERO_BIT);              // send Packet Start Bit
     else if(bitCount > 14 && bitCount < 23)
-      setBit(address,(22-bitCount));            // send Address Byte
+      setBit(currentTrain.address,(22-bitCount));            // send Address Byte
 
     else if(bitCount == 23)
       Timer1.initialize(ZERO_BIT);              // send Data Start Bit
     else if(bitCount > 23 && bitCount < 32)
-      setBit(data,(31-bitCount));               // send Data Byte
+      setBit(currentTrain.data,(31-bitCount));               // send Data Byte
 
     else if(bitCount == 32)
       Timer1.initialize(ZERO_BIT);              // send Error Start Bit
     else if(bitCount > 32 && bitCount < 41)
-      setBit(error,(40-bitCount));              // send Error Byte
+      setBit(currentTrain.error,(40-bitCount));              // send Error Byte
 
     else if(bitCount == 41)
       Timer1.initialize(ONE_BIT);               // send Packet End Bit
 
     if(bitCount > 41)
     {
-      bitCount = 0;
-      if(!doneflag)
-      {
-        doneflag = 1;
-        address = address2;
-        data = data2;
-        error = error2;
-      }
-      else
-      {
-        address = address1;
-        doneflag = 0; 
-        data = data1;
-        error = error1;
-      }
+      bitCount = 0;                                   // reset bit counter
+      countSent ++;                                   // increase sent message count
+      byte nextTrain = (countSent % countTrains);     // [# msgs sent] modulo [number of trains]
+      currentTrain = trainQueue[nextTrain];           // so that you only loop thru active trains
     }
-    else if(errorCheck(address,data,error))
+    else if(errorCheck(currentTrain.address,currentTrain.data,currentTrain.error))
       bitCount++;
     else
       bitCount = 0;      
@@ -129,4 +130,6 @@ boolean errorCheck(byte address, byte data, byte error)
   else
     return false;
 }
+
+
 
