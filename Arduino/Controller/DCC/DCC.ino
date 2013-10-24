@@ -49,15 +49,13 @@ void setup()
   Timer1.initialize(ONE_BIT);                   // initialize timer1, and set to 56 µs 
   Timer1.attachInterrupt(callback);             // attaches callback() as a timer overflow interrupt
   
-  trainQueue[0].address = 0x03;                 // statically assigning train 0 in array to physical train 3
-  trainQueue[0].data = 0x78;                    // statically assigning train 0 to go forward at step 14
-  trainQueue[0].error = 0x7b;                   // checksum of address ^ data
-  countTrains++;                                // increase train count
+  addTrain(0x03, 0x78, 0x7b);                 // statically assigning train 0 in array to physical train 3
+  // statically assigning train 0 to go forward at step 14
+  // checksum of address ^ data
 
-  trainQueue[0].address = 0x05;                 // statically assigning train 0 in array to physical train 3
-  trainQueue[0].data = 0x78;                    // statically assigning train 0 to go forward at step 14
-  trainQueue[0].error = 0x7d;                   // checksum of address ^ data
-  countTrains++;                                // increase train count
+  addTrain(0x05, 0x78, 0x7d);                   // statically assigning train 0 in array to physical train 3
+  // statically assigning train 0 to go forward at step 14
+  // checksum of address ^ data
 
   currentTrain = trainQueue[0];                 // sets the current train to the first in the queue.
 }
@@ -111,6 +109,18 @@ void loop()
 
 
 // Begin helper functions
+
+void addTrain(byte address, byte data, byte error)
+{
+ if(countTrains < MAX_TRAINS)
+ {
+   trainQueue[countTrains].address = address;
+   trainQueue[countTrains].data = data;
+   trainQueue[countTrains].error = error;
+   countTrains++;                             // post increment to show train added, 
+                                              // current countTrains is real number of trains active
+ }
+}
 
 
 // sends out zero, or one on DCC depending on input values
