@@ -149,10 +149,11 @@ void checkForNewData()
     tempStruct.address = Serial.read();
     tempStruct.data = Serial.read();
     tempStruct.error = Serial.read();
+           
     if(errorCheck(tempStruct.address,tempStruct.data,tempStruct.error))
     {
       i=0;
-      while(i < numberOfTrains-1)
+      while(i < numberOfTrains)
       {
         if(train[i].address == tempStruct.address)
         {
