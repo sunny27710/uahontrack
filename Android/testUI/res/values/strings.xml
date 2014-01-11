@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">testUI</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="custComm">Custom Command</string>
+    <string name="selTrain">Select Train</string>
+    <string name="spdCtrl">Speed Control</string>
+    <string name="direction">Forward</string>
+    <string name="send">Send</string>
+    <string name="add">+</string>
+    <string name="CustCommHintAddress">Address (Dec)</string>
+    <string name="CustCommHintSpeed">Speed (Dec)</string>
+    <string name="rawCommand">Raw</string>
+    <string name="connect">Connect</string>
+
+</resources>
