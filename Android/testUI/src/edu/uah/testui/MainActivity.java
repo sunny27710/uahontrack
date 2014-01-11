@@ -201,7 +201,7 @@ public class MainActivity extends Activity {
     }
     
     public void btnSendListener(){
-    	if(btSocket != null && btSocket.isConnected()){
+    	if(btSocket != null && btSocket.isConnected()){ //check to see if it is not null, then see if it is connected.
 			int address = 0;
 			int speed = 0;
 			int commandbits = 0;
