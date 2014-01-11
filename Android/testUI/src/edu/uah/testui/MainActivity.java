@@ -201,68 +201,71 @@ public class MainActivity extends Activity {
     }
     
     public void btnSendListener(){
-		int address = 0;
-		int speed = 0;
-		int commandbits = 0;
-		if(edtxtCustomCommAdd.getText().toString().length() > 0 && edtxtCustomCommSpeed.getText().toString().length() > 0 && chkbxRawComm.isChecked()){
-			try {
-				address =  Integer.parseInt(edtxtCustomCommAdd.getText().toString());
-				commandbits =  Integer.parseInt(edtxtCustomCommSpeed.getText().toString());
+    	if(btSocket.isConnected()){
+			int address = 0;
+			int speed = 0;
+			int commandbits = 0;
+			if(edtxtCustomCommAdd.getText().toString().length() > 0 && edtxtCustomCommSpeed.getText().toString().length() > 0 && chkbxRawComm.isChecked()){
+				try {
+					address =  Integer.parseInt(edtxtCustomCommAdd.getText().toString());
+					commandbits =  Integer.parseInt(edtxtCustomCommSpeed.getText().toString());
+				}
+				catch(NumberFormatException nfe) {
+		        	   System.out.println("Could not parse " + nfe);
+		        	   txtvwStatus.setText("Could not Parse");
+	        	} 
 			}
-			catch(NumberFormatException nfe) {
-	        	   System.out.println("Could not parse " + nfe);
-	        	   txtvwStatus.setText("Could not Parse");
-        	} 
-		}
-		else if(edtxtCustomCommAdd.getText().toString().length() > 0 && edtxtCustomCommSpeed.getText().toString().length() > 0){
-			try {
-				address =  Integer.parseInt(edtxtCustomCommAdd.getText().toString());
-				speed =  Integer.parseInt(edtxtCustomCommSpeed.getText().toString());
+			else if(edtxtCustomCommAdd.getText().toString().length() > 0 && edtxtCustomCommSpeed.getText().toString().length() > 0){
+				try {
+					address =  Integer.parseInt(edtxtCustomCommAdd.getText().toString());
+					speed =  Integer.parseInt(edtxtCustomCommSpeed.getText().toString());
+				}
+				catch(NumberFormatException nfe) {
+		        	   System.out.println("Could not parse " + nfe);
+		        	   txtvwStatus.setText("Could not Parse");
+	        	}
+				if(speed <= 31 && speed >= 0){
+					for (int i = 1; i <= speed; i++){
+						commandbits^= 0x10;
+						if (i%2 == 0)
+							commandbits+= 0x01;							
+					}
+			
+			
+					if(btnDirection.getText() == "Forward" )
+						commandbits^= 96; //64 is for the 01 in the packet format 32 for the forward direction
+					else
+						commandbits^= 64;
+				}
+				else{
+					txtvwStatus.setText("Speed not in range for non-raw input, please use 0-32");
+				}
+					
 			}
-			catch(NumberFormatException nfe) {
-	        	   System.out.println("Could not parse " + nfe);
-	        	   txtvwStatus.setText("Could not Parse");
-        	}
-			if(speed <= 31 && speed >= 0){
+			else  {
+				address = trainNum[spnTrain.getSelectedItemPosition()];
+				speed = skbarSpeed.getProgress();
 				for (int i = 1; i <= speed; i++){
 					commandbits^= 0x10;
 					if (i%2 == 0)
 						commandbits+= 0x01;							
 				}
-		
-		
+			
 				if(btnDirection.getText() == "Forward" )
 					commandbits^= 96; //64 is for the 01 in the packet format 32 for the forward direction
 				else
 					commandbits^= 64;
 			}
-			else{
-				txtvwStatus.setText("Speed not in range for non-raw input, please use 0-32");
+			int checksum = address ^ commandbits;
+			try{
+				sendMessage(address, commandbits, checksum);
 			}
-				
-		}
-		else  {
-			address = trainNum[spnTrain.getSelectedItemPosition()];
-			speed = skbarSpeed.getProgress();
-			for (int i = 1; i <= speed; i++){
-				commandbits^= 0x10;
-				if (i%2 == 0)
-					commandbits+= 0x01;							
+			finally{
+				Log.d("OnTrack", "Sent Message");
 			}
-		
-			if(btnDirection.getText() == "Forward" )
-				commandbits^= 96; //64 is for the 01 in the packet format 32 for the forward direction
-			else
-				commandbits^= 64;
-		}
-		int checksum = address ^ commandbits;
-		try{
-			sendMessage(address, commandbits, checksum);
-		}
-		finally{
-			Log.d("OnTrack", "Sent Message");
-		}
-		
+    	}
+    else
+    	txtvwStatus.setText("Bluetooth Not Connected!");
     }
     
     public void btnAddListener(){
