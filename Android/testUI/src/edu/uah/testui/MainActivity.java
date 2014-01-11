@@ -202,8 +202,9 @@ public class MainActivity extends Activity {
     
     public void btnSendListener(){
     	if(btSocket != null && btSocket.isConnected()){ //check to see if it is not null, then see if it is connected.
-    		//testing one more time.
-			int address = 0;
+    		
+			// variables
+    		int address = 0;
 			int speed = 0;
 			int commandbits = 0;
 			if(edtxtCustomCommAdd.getText().toString().length() > 0 && edtxtCustomCommSpeed.getText().toString().length() > 0 && chkbxRawComm.isChecked()){
